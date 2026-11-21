@@ -168,7 +168,13 @@ _JOURNAL_SEGMENT_PATTERN = re.compile(r"^[0-9]{16}\.jsonl$")
 # read a store they hold no lease on: retaining the predecessor gives such a reader a
 # whole publication of slack before `_load_current` has to retry.
 _RETAINED_GENERATIONS = 2
-_MAX_DOCUMENT_BYTES = 64 * 1024 * 1024
+# Raised from 64 MiB. A publication inlines the same payload up to four times --
+# the completion Action's request, the directive that dispatches it, and the
+# tool_result_committed and tool_execution_finished observations -- so one
+# read_file of an image at MAX_IMAGE_BYTES (10 MiB, ~13.3 MiB base64) costs
+# ~53 MiB of runtime-state.json on its own. A journal fold during compaction
+# then exceeded the old cap and left the Session permanently read-only.
+_MAX_DOCUMENT_BYTES = 256 * 1024 * 1024
 _MAX_SAFE_JSON_INTEGER = 2**53 - 1
 # ERROR_ACCESS_DENIED and ERROR_SHARING_VIOLATION, raised while another process
 # holds the file open; six attempts wait about 1.5 s in total.

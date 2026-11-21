@@ -10,6 +10,15 @@ pub const EDITOR_SCHEMES: [&str; 5] = ["vscode", "vscode-insiders", "cursor", "w
 const WEB_SCHEMES: [&str; 2] = ["http", "https"];
 
 pub fn open(url: &str) {
+    // A `file:` link is a local path, not a web URL: send it through the same
+    // absolute-path validation attachments use instead of the scheme allow-list.
+    if url
+        .split_once(':')
+        .is_some_and(|(scheme, _)| scheme.eq_ignore_ascii_case("file"))
+    {
+        open_file(url);
+        return;
+    }
     if !is_safe(url) {
         tracing::warn!(url, "refusing to open url");
         return;
